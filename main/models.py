@@ -1,52 +1,125 @@
-from django.contrib.auth.models import User
+import datetime
+from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-
+from django.utils.text import slugify
 
 # Create your models here.
 
+User = settings.AUTH_USER_MODEL
+
+
 class Category(models.Model):
     name = models.CharField(max_length=100)
-    image = models.ImageField(upload_to='images/', null=True, blank=True)
+    slug = models.SlugField(max_length=100, unique=True)
+    image = models.ImageField(upload_to='categories/', null=True, blank=True)
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+
+            counter = 1
+            while Category.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+
+        super().save(*args, **kwargs)
 
 
 class SubCategory(models.Model):
     name = models.CharField(max_length=100)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
+    slug = models.SlugField(max_length=100, unique=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+
+            counter = 1
+            while SubCategory.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+
+        super().save(*args, **kwargs)
+
+
+class Seller(models.Model):
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    image = models.ImageField(upload_to="sellers/", null=True, blank=True)
+
+    def __str__(self):
+        return self.first_name
 
 
 class Product(models.Model):
-    name = models.CharField(max_length=100)
-    brand = models.CharField(max_length=100)
-    details = models.TextField()
-    amount = models.PositiveSmallIntegerField()
+    name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=260, unique=True)
+    brand = models.CharField(max_length=100, blank=True, null=True)
+    details = models.TextField(blank=True, null=True)
     price = models.FloatField()
-    delivery = models.DateField()
+    amount = models.PositiveIntegerField(default=0)
+    delivery = models.CharField(max_length=100, blank=True, null=True)
 
     sub_category = models.ForeignKey(SubCategory, on_delete=models.SET_NULL, null=True)
-    seller = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    seller = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+
+            counter = 1
+            while Product.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+
+        super().save(*args, **kwargs)
+
+    @property
+    def get_main_media(self):
+        medias = self.media_set.all()
+        if medias.exists():
+            media = medias.order_by('-main').first()
+            return media
+        return None
+
 
 class Media(models.Model):
-    image = models.ImageField(upload_to='images/', null=True, blank=True)
+    image = models.ImageField(upload_to='media/')
     main = models.BooleanField(default=False)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.product.name
+        return f'Media of {self.product.name}'
+
+
+class Property(models.Model):
+    name = models.CharField(max_length=100)
+    value = models.TextField()
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
 
 
 class Choice(models.Model):
     name = models.CharField(max_length=100)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -54,100 +127,67 @@ class Choice(models.Model):
 
 class Variant(models.Model):
     name = models.CharField(max_length=100)
-    image = models.ImageField(upload_to='images/', null=True, blank=True)
-    choice = models.ForeignKey(Choice, on_delete=models.SET_NULL, null=True)
+    image = models.ImageField(upload_to='variants/', blank=True, null=True)
+    delta_price = models.FloatField(default=0)
+    choice = models.ForeignKey(Choice, on_delete=models.CASCADE)
+
+    @property
+    def get_next_price(self):
+        return self.choice.product.price + self.delta_price
 
     def __str__(self):
         return self.name
 
 
-class Property(models.Model):
-    name = models.CharField(max_length=100)
-    value = models.CharField(max_length=100)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+class Discount(models.Model):
+    percentage = models.FloatField(blank=True, null=True)
+    dis_price = models.FloatField(blank=True, null=True)
+    new_price = models.FloatField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateField(blank=True, null=True)
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.name
+        return f"{self.product.name} - {self.percentage}% discount"
+
+    def save(self, *args, **kwargs):
+        price = self.product.price
+        if self.percentage:
+            self.new_price = price * (100 - self.percentage) / 100
+            self.dis_price = price - self.new_price
+        elif self.dis_price:
+            self.new_price = price - self.dis_price
+            self.percentage = 100 - self.new_price * 100 / price
+        elif self.new_price:
+            self.percentage = 100 - self.new_price * 100 / price
+            self.dis_price = price - self.new_price
+        else:
+            self.finished_at = datetime.date.today()
+        super().save(*args, **kwargs)
 
 
 class Review(models.Model):
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     text = models.TextField()
-    rate = models.PositiveSmallIntegerField()
+    rate = models.PositiveSmallIntegerField(
+        blank=True, null=True, validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
     created_at = models.DateTimeField(auto_now_add=True)
+
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.user.username} - {self.text}"
 
 
-class Discount(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    percentage = models.FloatField()
-    value = models.PositiveSmallIntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    finished_at = models.DateTimeField()
-
-    def __str__(self):
-        return f"{self.product.name} - {self.percentage}% discount"
-
-
-class Favorite(models.Model):
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user.username} - {self.product.name} favorite"
-
-
-class CartItem(models.Model):
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    variants = models.ManyToManyField(Variant, blank=True)
-    amount = models.PositiveSmallIntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user.username} - {self.product.name}"
-
-
-class AddBanner(models.Model):
+class AdBanner(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
-    image = models.ImageField(upload_to='images/', null=True, blank=True)
-    url = models.URLField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    image = models.ImageField(upload_to='adverts/')
+    url = models.URLField(blank=True, null=True)
     is_active = models.BooleanField(default=False)
+    end_date = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return self.title
-
-
-class Order(models.Model):
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=100)
-    address = models.TextField(null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    country = models.CharField(max_length=100)
-    city = models.CharField(max_length=100)
-    delivery_type = models.CharField(max_length=100)
-    payment_type = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)
-    total = models.PositiveSmallIntegerField()
-    status = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"{self.first_name} - {self.last_name} - {self.phone_number}"
-
-
-class OrderItem(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True)
-    amount = models.PositiveSmallIntegerField()
-    variants = models.ManyToManyField(Variant, blank=True)
-
-    def __str__(self):
-        return f"{self.product.name} - {self.order}"
