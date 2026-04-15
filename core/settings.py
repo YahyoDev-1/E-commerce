@@ -39,9 +39,10 @@ INSTALLED_APPS = [
     #     My Apps
     'main.apps.MainConfig',
     'users.apps.UsersConfig',
-    'orders.apps.OrdersConfig',
+    'order.apps.OrderConfig',
 
     #     Packages
+    'cities_light'
     
 ]
 
@@ -124,4 +125,10 @@ if DEBUG:
 else:
     STATIC_ROOT = BASE_DIR / 'static'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 AUTH_USER_MODEL = 'users.User'
+
+# CITIES_LIGHT_INCLUDE_COUNTRIES = ['UZ', 'KZ', 'KG', 'TJ', 'TM', 'EN', 'RU']
+# CITIES_LIGHT_TRANSLATION_LANGUAGES = ['uz']

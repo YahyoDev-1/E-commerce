@@ -68,6 +68,7 @@ class Product(models.Model):
     brand = models.CharField(max_length=100, blank=True, null=True)
     details = models.TextField(blank=True, null=True)
     price = models.FloatField()
+    country = models.CharField(max_length=100, default='Uzbekistan')
     amount = models.PositiveIntegerField(default=0)
     delivery = models.CharField(max_length=100, blank=True, null=True)
 
