@@ -1,3 +1,4 @@
+from cities_light.models import Country
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
@@ -40,7 +41,7 @@ class RegisterView(View):
                 last_name=request.POST.get('last_name'),
                 phone=request.POST.get('phone'),
                 gender=request.POST.get('gender'),
-                # country=get_object_or_404(Country, pk=request.POST.get('country_id')),
+                country=get_object_or_404(Country, pk=request.POST.get('country_id')),
                 city=request.POST.get('city'),
 
             )
