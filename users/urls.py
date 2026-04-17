@@ -7,4 +7,6 @@ urlpatterns = [
     path('register/confirm', RegisterConfirmView.as_view(), name='register-confirm'),
 
     path('login/', LoginView.as_view(), name='login'),
+
+    path('logout/', logout_view, name='logout'),
 ]

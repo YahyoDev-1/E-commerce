@@ -10,21 +10,21 @@ from eskiz_sms import EskizSMS
 
 # from cities_light.models import Country
 
-
-email = "abdujabborovyahyobek44@gmail.com"
-password = "your_password"
-eskiz = EskizSMS(email=email, password=password)
+#
+# email = "abdujabborovyahyobek44@gmail.com"
+# password = "your_password"
+# eskiz = EskizSMS(email=email, password=password)
 
 
 # Create your views here.
 
 class RegisterView(View):
     def get(self, request):
-        # countries = Country.objects.all()
-        # context = {
-        #     'countries': countries
-        # }
-        return render(request, 'register.html')
+        countries = Country.objects.all()
+        context = {
+            'countries': countries,
+        }
+        return render(request, 'register.html', context)
 
     def post(self, request):
         if User.objects.filter(phone=request.POST.get('phone')).exists():
@@ -51,7 +51,7 @@ class RegisterView(View):
             user.save()
 
             login(request, user)
-            eskiz.send_sms(user.phone, f"Bu Eskiz dan test")
+            # eskiz.send_sms(user.phone, f"Bu Eskiz dan test")
 
             return redirect('register-confirm')
 
@@ -75,9 +75,18 @@ class LoginView(View):
         return render(request, 'login.html')
 
     def post(self, request):
-        pass
+        user = authenticate(
+            username=request.POST.get('username'),
+            password=request.POST.get('password')
+        )
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+
+        messages.error(request, 'Telefon raqam yoki parol mos emas!')
+        return render(request, 'login.html')
 
 
 def logout_view(request):
     logout(request)
-    return redirect('register')
+    return redirect('login')

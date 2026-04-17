@@ -11,7 +11,7 @@ User = settings.AUTH_USER_MODEL
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, unique=True, blank=True)
     image = models.ImageField(upload_to='categories/', null=True, blank=True)
 
     def __str__(self):
@@ -188,7 +188,7 @@ class AdBanner(models.Model):
     image = models.ImageField(upload_to='adverts/')
     url = models.URLField(blank=True, null=True)
     is_active = models.BooleanField(default=False)
-    end_date = models.DateTimeField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
 
     def __str__(self):
         return self.title
