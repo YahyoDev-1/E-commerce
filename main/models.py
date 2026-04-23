@@ -34,6 +34,7 @@ class Category(models.Model):
 class SubCategory(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, unique=True)
+    image = models.ImageField(upload_to='sub-categories/', null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
@@ -71,6 +72,7 @@ class Product(models.Model):
     country = models.CharField(max_length=100, default='Uzbekistan')
     amount = models.PositiveIntegerField(default=0)
     delivery = models.CharField(max_length=100, blank=True, null=True)
+    verified = models.BooleanField(default=False)
 
     sub_category = models.ForeignKey(SubCategory, on_delete=models.SET_NULL, null=True)
     seller = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
@@ -101,7 +103,7 @@ class Product(models.Model):
 
 
 class Media(models.Model):
-    image = models.ImageField(upload_to='media/')
+    image = models.ImageField(upload_to='media-products/')
     main = models.BooleanField(default=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
 

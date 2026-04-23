@@ -1,3 +1,4 @@
+from cities_light.models import Country
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -31,7 +32,7 @@ class Order(models.Model):
     first_name = models.CharField(max_length=100, blank=True, null=True)
     last_name = models.CharField(max_length=100, blank=True, null=True)
     phone_number = models.CharField(max_length=100, blank=True, null=True)
-    # country = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True, blank=True)
+    country = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True, blank=True)
     city = models.CharField(max_length=100, blank=True, null=True)
     address = models.TextField(null=True, blank=True)
     delivery_type = models.CharField(max_length=100, blank=True, null=True)

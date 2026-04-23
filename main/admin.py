@@ -1,12 +1,18 @@
 from django.contrib import admin
 from django.apps import apps
 
+from main.models import *
+
 # Register your models here.
 
-app_models = apps.get_app_config('main').get_models()
+admin.site.register(
+    [Category, SubCategory, Seller, Property, Choice, Variant, Discount, Review, AdBanner]
+)
 
-for model in app_models:
-    try:
-        admin.site.register(model)
-    except admin.sites.AlreadyRegistered:
-        pass
+class MediaInline(admin.StackedInline):
+    model = Media
+    extra = 1
+
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    inlines = [MediaInline]
