@@ -1,15 +1,21 @@
 <div class="row">
-    <div class="col-md-2">Sahifa:</div> <!-- col.// -->
+    <div class="col-md-2">Sahifa:</div>
     <nav class="col-md-8">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'home' %}">Bosh Sahifa</a></li>
-            {% if query_sub %}
-            <li class="breadcrumb-item"><a href="{% url 'category' sub_category.category.slug %}">{{
-                sub_category.category.name }}</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'products' %}?sub-category={{ query_sub }}">{{ sub_category.name
-                }}</a></li>
+
+            {% if query_sub and sub_category %}
+                <li class="breadcrumb-item">
+                    <a href="{% url 'category' sub_category.category.slug %}">
+                        {{ sub_category.category.name }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">
+                    {{ sub_category.name }}
+                </li>
             {% endif %}
-            <li class="breadcrumb-item">Mahsulotlar</li>
+
+            <li class="breadcrumb-item active">Mahsulotlar</li>
         </ol>
-    </nav> <!-- col.// -->
-</div> <!-- row.// -->
+    </nav>
+</div>

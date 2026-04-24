@@ -50,9 +50,10 @@ class ProductsView(View):
                 'products': products,
                 'query_sub': query_sub,
                 'sub_category': sub_category,
+                'query_view': query_view,
             }
 
-            if query_view.lower() == 'large':
+            if query_view and query_view.lower() == 'large':
                 return render(request, 'products-large.html', context)
             return render(request, 'products-grid.html', context)
         return redirect('login')

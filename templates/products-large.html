@@ -10,7 +10,7 @@
         <!-- ============================  FILTER TOP  ================================= -->
         <div class="card mb-3">
             <div class="card-body">
-                {% include 'componenets/route-page.html' %}
+                {% include 'components/route-page.html' %}
             </div> <!-- card-body .// -->
         </div> <!-- card.// -->
         <!-- ============================ FILTER TOP END.// ================================= -->
@@ -166,15 +166,21 @@
                             <option>Cheapest</option>
                         </select>
                         <div class="btn-group">
+                            <!-- List view: view=large har doim birinchi parametr -->
                             <a href="{% url 'products' %}?view=large{% if query_sub %}&sub-category={{ query_sub }}{% endif %}"
-                               class="btn btn-light active" data-toggle="tooltip"
-                               title="List view">
-                                <i class="fa fa-bars"></i></a>
-                            <a href="{% url 'products' %}{% if query_sub %}?sub-category={{ query_sub }}{% endif %}"
-                               class="btn btn-light" data-toggle="tooltip"
-                               title="Grid view">
-                                <i class="fa fa-th"></i></a>
+                               class="btn btn-light {% if query_view == 'large' %}active{% endif %}"
+                               data-toggle="tooltip" title="List view">
+                                <i class="fa fa-bars"></i>
+                            </a>
+
+                            <!-- Grid view: view=grid deb aniq ko'rsatish xavfsizroq -->
+                            <a href="{% url 'products' %}?view=grid{% if query_sub %}&sub-category={{ query_sub }}{% endif %}"
+                               class="btn btn-light {% if query_view != 'large' %}active{% endif %}"
+                               data-toggle="tooltip" title="Grid view">
+                                <i class="fa fa-th"></i>
+                            </a>
                         </div>
+
                     </div>
                 </header><!-- sect-heading -->
 
