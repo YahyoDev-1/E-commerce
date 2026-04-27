@@ -1,4 +1,6 @@
 import datetime
+
+from cities_light.models import Country
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
@@ -65,14 +67,16 @@ class Seller(models.Model):
 
 class Product(models.Model):
     name = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=260, unique=True)
+    slug = models.SlugField(max_length=260, unique=True, blank=True)
     brand = models.CharField(max_length=100, blank=True, null=True)
     details = models.TextField(blank=True, null=True)
     price = models.FloatField()
-    country = models.CharField(max_length=100, default='Uzbekistan')
+    country = models.ForeignKey(Country, on_delete=models.SET_NULL, blank=True, null=True)
     amount = models.PositiveIntegerField(default=0)
     delivery = models.CharField(max_length=100, blank=True, null=True)
     verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
 
     sub_category = models.ForeignKey(SubCategory, on_delete=models.SET_NULL, null=True)
     seller = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
