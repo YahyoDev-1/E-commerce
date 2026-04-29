@@ -76,6 +76,7 @@ class Product(models.Model):
     delivery = models.CharField(max_length=100, blank=True, null=True)
     verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    views = models.PositiveIntegerField()
 
 
     sub_category = models.ForeignKey(SubCategory, on_delete=models.SET_NULL, null=True)
