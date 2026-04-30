@@ -77,7 +77,8 @@ class Product(models.Model):
     verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     views = models.PositiveIntegerField()
-
+    rating = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(5)], default=0)
+    guarantee = models.CharField(max_length=50, blank=True, null=True)
 
     sub_category = models.ForeignKey(SubCategory, on_delete=models.SET_NULL, null=True)
     seller = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
@@ -105,6 +106,24 @@ class Product(models.Model):
             media = medias.order_by('-main').first()
             return media
         return None
+
+    @property
+    def rating_percentage(self):
+        return self.rating / 5 * 100
+
+    @property
+    def get_discount(self):
+        discounts = self.discount_set.filter(end_date__gte=datetime.date.today()).order_by('-id')
+        if discounts.exists():
+            return discounts.first()
+        return None
+
+    @property
+    def final_price(self):
+        discount = self.get_discount
+        if discount:
+            return discount.new_price
+        return self.price
 
 
 class Media(models.Model):
@@ -152,7 +171,7 @@ class Discount(models.Model):
     dis_price = models.FloatField(blank=True, null=True)
     new_price = models.FloatField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    finished_at = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
@@ -177,16 +196,27 @@ class Discount(models.Model):
 
 class Review(models.Model):
     text = models.TextField()
-    rate = models.PositiveSmallIntegerField(
-        blank=True, null=True, validators=[MinValueValidator(1), MaxValueValidator(5)]
-    )
+    rate = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)], default=5)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('user', 'product')
 
     def __str__(self):
         return f"{self.user.username} - {self.text}"
+
+    def save(self, *args, **kwargs):
+
+        product = self.product
+        rates = product.review_set.all().values_list('rate', flat=True)
+
+        product.rating = (sum(rates) + int(self.rate)) / (len(rates) + 1)
+        product.save()
+
+        super().save(*args, **kwargs)
 
 
 class AdBanner(models.Model):

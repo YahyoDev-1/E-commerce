@@ -5,7 +5,7 @@ from django.db.models import Count
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 
-from main.models import Category, AdBanner, Product, SubCategory
+from main.models import Category, AdBanner, Product, SubCategory, Review
 
 
 # Create your views here.
@@ -101,4 +101,36 @@ class ProductsView(View):
             if query_view and query_view.lower() == 'large':
                 return render(request, 'products-large.html', context)
             return render(request, 'products-grid.html', context)
+        return redirect('login')
+
+
+class ProductDetailsView(View):
+    def get(self, request, slug):
+        if request.user.is_authenticated and request.user.confirmed:
+            product = get_object_or_404(Product, slug=slug)
+
+            query_image = request.GET.get('image')
+
+            reviews = product.review_set.all
+
+            context = {
+                'product': product,
+                'image': int(query_image) if query_image else None,
+                'reviews': reviews,
+            }
+            return render(request, 'product-details.html', context)
+        return redirect('login')
+
+
+class AddReviewView(View):
+    def post(self, request, slug):
+        if request.user.is_authenticated and request.user.confirmed:
+            product = get_object_or_404(Product, slug=slug)
+            Review.objects.create(
+                product=product,
+                user=request.user,
+                rate=request.POST.get('rate'),
+                text=request.POST.get('text'),
+            )
+            return redirect('product-details', slug=slug)
         return redirect('login')

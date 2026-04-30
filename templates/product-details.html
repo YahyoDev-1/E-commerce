@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<section class="py-3 bg-light">
+    <div class="container">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Bosh sahifa</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'category' product.sub_category.category.slug %}">{{ product.sub_category.category.name }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'products' %}?sub-category={{ sub_category.slug }}">{{ product.sub_category.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+        </ol>
+    </div>
+</section>
+
+<!-- ========================= SECTION CONTENT ========================= -->
+<section class="section-content bg-white padding-y">
+    <div class="container">
+
+        <!-- ============================ ITEM DETAIL ======================== -->
+        <div class="row">
+            <aside class="col-md-6">
+                <div class="card">
+                    <article class="gallery-wrap">
+                        <div class="img-big-wrap">
+                            <div><a href="#"><img alt="Product-image" src="
+                            {% if image %}
+                                {% for media in product.media_set.all %}
+                                    {% if forloop.counter == image %} {{ media.image.url }} {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                {{ product.get_main_media.image.url }}
+                            {% endif %}"></a></div>
+                        </div> <!-- slider-product.// -->
+                        <div class="thumbs-wrap">
+                            {% for media in product.media_set.all %}
+                                <a href="{% url 'product-details' product.slug %}?image={{ forloop.counter }}" class="item-thumb"> <img alt="Product-image" src="{{ media.image.url }}"></a>
+                            {% endfor %}
+                        </div> <!-- slider-nav.// -->
+                    </article> <!-- gallery-wrap .end// -->
+                </div> <!-- card.// -->
+            </aside>
+            <main class="col-md-6">
+                <article class="product-info-aside">
+
+                    <h2 class="title mt-3">{{ product.name }} </h2>
+
+                    <div class="rating-wrap my-3">
+                        <ul class="rating-stars">
+                            <li style="width:{{ product.rating_percentage }}%" class="stars-active">
+                                <i class="fa fa-star"></i> <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i> <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                            </li>
+                            <li>
+                                <i class="fa fa-star"></i> <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i> <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                            </li>
+                        </ul>
+                        <small class="label-rating text-muted">{{ product.review_set.count }} reviews</small>
+                        <small class="label-rating text-success"> <i class="fa fa-clipboard-check"></i> {{ product.orderitem_set.count }} orders
+                        </small>
+                    </div> <!-- rating-wrap.// -->
+
+                    <div class="mb-3">
+                        <var style="text-decoration: line-through; color: grey" class="price">{{ product.price }} UZS</var>
+                        <br>
+                        <var class="price h4" style="color: coral">{{ product.final_price }} UZS</var>
+                        <span class="text-muted">{{ product.get_discount.percentage }}% chegirma</span>
+                    </div> <!-- price-detail-wrap .// -->
+                    <p>{{ product.details }} </p>
+
+
+                    <dl class="row">
+                        <dt class="col-sm-3">Ishlab chiqaruvchi</dt>
+                        <dd class="col-sm-9"><a href="#">{% if product.brand %} {{ product.brand }} {% endif %}</a></dd>
+
+                        <dt class="col-sm-3">Kafolat</dt>
+                        <dd class="col-sm-9">{% if product.guarantee %} {{ product.guarantee }} {% endif %}</dd>
+
+                        <dt class="col-sm-3">Yetkazib berish</dt>
+                        <dd class="col-sm-9">{{ product.delivery }} ichida</dd>
+
+                        <dt class="col-sm-3">Omborda</dt>
+                        {% if product.amount %}
+                        <dd class="col-sm-9">{{ product.amount }} dona</dd>
+                        {% else %}
+                        <dd class="col-sm-9">Mavjud emas</dd>
+                        {% endif %}
+                    </dl>
+
+                    <div class="form-row  mt-4">
+                        <div class="form-group col-md flex-grow-0">
+                            <div class="input-group mb-3 input-spinner">
+                                <div class="input-group-prepend">
+                                    <button class="btn btn-light" type="button" id="button-plus"> +</button>
+                                </div>
+                                <input type="text" class="form-control" value="1">
+                                <div class="input-group-append">
+                                    <button class="btn btn-light" type="button" id="button-minus"> &minus;</button>
+                                </div>
+                            </div>
+                        </div> <!-- col.// -->
+                        <div class="form-group col-md">
+                            <a href="#" class="btn  btn-primary">
+                                <i class="fas fa-shopping-cart"></i> <span class="text">Add to cart</span>
+                            </a>
+                            <a href="#" class="btn btn-light">
+                                <i class="fas fa-envelope"></i> <span class="text">Contact supplier</span>
+                            </a>
+                        </div> <!-- col.// -->
+                    </div> <!-- row.// -->
+
+                </article> <!-- product-info-aside .// -->
+            </main> <!-- col.// -->
+        </div> <!-- row.// -->
+
+        <!-- ================ ITEM DETAIL END .// ================= -->
+
+
+    </div> <!-- container .//  -->
+</section>
+<!-- ========================= SECTION CONTENT END// ========================= -->
+
+<div class="container d-flex justify-content-center align-items-center">
+    <form method="post" action="{% url 'add-review' product.slug %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="smileyRating">Mahsulotni baholang:</label>
+            <div class="rating-container d-flex" id="smileyRating" style="gap: 20px;">
+                <input required type="radio" name="rate" value="1" id="smiley1" style="display:none;">
+                <label class="smiley-face" for="smiley1" style="cursor: pointer">&#9785;</label>
+                <input required type="radio" name="rate" value="2" id="smiley2" style="display:none;">
+                <label class="smiley-face" for="smiley2" style="cursor: pointer">&#x1F610;</label>
+                <input required type="radio" name="rate" value="3" id="smiley3" style="display:none;">
+                <label class="smiley-face" for="smiley3" style="cursor: pointer">&#x1F642;</label>
+                <input required type="radio" name="rate" value="4" id="smiley4" style="display:none;">
+                <label class="smiley-face" for="smiley4" style="cursor: pointer">&#x1F600;</label>
+                <input required type="radio" name="rate" value="5" id="smiley5" style="display:none;">
+                <label class="smiley-face" for="smiley5" style="cursor: pointer">&#x1F929;</label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="exampleInputComment1">Izoh kiriting:</label>
+            <input type="text" class="form-control" id="exampleInputComment1" aria-describedby="commentHelp"
+                   placeholder="Izoh qoldiring..." name="text">
+        </div>
+        <button type="submit" class="btn btn-primary">Yuborish</button>
+    </form>
+
+    <div id="selectedRating"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            var smileyFaces = document.querySelectorAll('.smiley-face');
+
+            smileyFaces.forEach((face) => {
+                face.addEventListener('click', () => {
+                    // reset transform of all smiley faces
+                    smileyFaces.forEach((face) => {
+                        face.style.transform = "none"; // add !important if necessary
+                    });
+                    // scale up the clicked smiley face
+                    face.style.transform = "scale(2)"; // add !important if necessary
+                });
+            });
+        });
+    </script>
+</div>
+
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <h2 class="text-center mb-4">Izohlar</h2>
+            <hr>
+            {% for review in reviews %}
+            <div class="row">
+                <div class="col-sm-2">
+                    <div class="text-center">
+                        {% if review.rate == 1 %}
+                        <span class="smiley-face">&#9785;</span>
+                        {% elif review.rate == 2 %}
+                        <span class="smiley-face">&#x1F610;</span>
+                        {% elif review.rate == 3 %}
+                        <span class="smiley-face">&#x1F642;</span>
+                        {% elif review.rate == 4 %}
+                        <span class="smiley-face">&#x1F600;</span>
+                        {% elif review.rate == 5 %}
+                        <span class="smiley-face">&#x1F929;</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-sm-10">
+                    <p>{{ review.text }}</p>
+                    <div class="user d-flex" style="gap: 300px">
+                        <p><small class="text-muted">{{ review.created_at|date:"Y-m-d H:i" }}</small></p>
+                        <p><small class="text-muted">{{ review.user.get_full_name }}</small></p>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            {% empty %}
+            <p>Hozircha sharhlar yo'q, lekin sizniki birinchi bo'lishi mumkin.</p>
+            <p>Xaridingiz haqida fikringizni bildiring va boshqa xaridorlarga tanlov qilishga yordam bering.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+
+<!-- ========================= SECTION SUBSCRIBE  ========================= -->
+<section class="padding-y-lg bg-light border-top">
+    <div class="container">
+
+        <p class="pb-2 text-center">Delivering the latest product trends and industry news straight to your inbox</p>
+
+        <div class="row justify-content-md-center">
+            <div class="col-lg-4 col-sm-6">
+                <form class="form-row">
+                    <div class="col-8">
+                        <input class="form-control" placeholder="Your Email" type="email">
+                    </div> <!-- col.// -->
+                    <div class="col-4">
+                        <button type="submit" class="btn btn-block btn-warning"><i class="fa fa-envelope"></i> Subscribe
+                        </button>
+                    </div> <!-- col.// -->
+                </form>
+                <small class="form-text">We’ll never share your email address with a third-party. </small>
+            </div> <!-- col-md-6.// -->
+        </div>
+
+
+    </div>
+</section>
+<!-- ========================= SECTION SUBSCRIBE END// ========================= -->
+
+{% endblock %}
