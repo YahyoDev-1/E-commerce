@@ -34,7 +34,8 @@
                         </div> <!-- slider-product.// -->
                         <div class="thumbs-wrap">
                             {% for media in product.media_set.all %}
-                                <a href="{% url 'product-details' product.slug %}?image={{ forloop.counter }}" class="item-thumb"> <img alt="Product-image" src="{{ media.image.url }}"></a>
+                            <a href="{% url 'product-details' product.slug %}?image={{ forloop.counter }}"
+                               class="item-thumb"> <img alt="Product-image" src="{{ media.image.url }}"></a>
                             {% endfor %}
                         </div> <!-- slider-nav.// -->
                     </article> <!-- gallery-wrap .end// -->
@@ -47,7 +48,7 @@
 
                     <div class="rating-wrap my-3">
                         <ul class="rating-stars">
-                            <li style="width:{{ product.rating_percentage }}%" class="stars-active">
+                            <li style="width: {{ product.rating_percentage }}%" class="stars-active">
                                 <i class="fa fa-star"></i> <i class="fa fa-star"></i>
                                 <i class="fa fa-star"></i> <i class="fa fa-star"></i>
                                 <i class="fa fa-star"></i>
@@ -64,7 +65,8 @@
                     </div> <!-- rating-wrap.// -->
 
                     <div class="mb-3">
-                        <var style="text-decoration: line-through; color: grey" class="price">{{ product.price }} UZS</var>
+                        <var style="text-decoration: line-through; color: grey" class="price">{{ product.price }}
+                            UZS</var>
                         <br>
                         <var class="price h4" style="color: coral">{{ product.final_price }} UZS</var>
                         <span class="text-muted">{{ product.get_discount.percentage }}% chegirma</span>
@@ -91,23 +93,13 @@
                     </dl>
 
                     <div class="form-row  mt-4">
-                        <div class="form-group col-md flex-grow-0">
-                            <div class="input-group mb-3 input-spinner">
-                                <div class="input-group-prepend">
-                                    <button class="btn btn-light" type="button" id="button-plus"> +</button>
-                                </div>
-                                <input type="text" class="form-control" value="1">
-                                <div class="input-group-append">
-                                    <button class="btn btn-light" type="button" id="button-minus"> &minus;</button>
-                                </div>
-                            </div>
-                        </div> <!-- col.// -->
                         <div class="form-group col-md">
-                            <a href="#" class="btn  btn-primary">
+                            <a href="{% url 'set-cart' product.slug %}" class="btn  btn-primary">
                                 <i class="fas fa-shopping-cart"></i> <span class="text">Add to cart</span>
                             </a>
-                            <a href="#" class="btn btn-light">
-                                <i class="fas fa-envelope"></i> <span class="text">Contact supplier</span>
+                            <a href="{% url 'set-favorite' product.slug %}" class="btn btn-light">
+                                <i {% if in_favorite %} style="color: red" {% endif %} class="fas fa-heart"></i> <span
+                                    class="text">Sevimlilarga qo'shish</span>
                             </a>
                         </div> <!-- col.// -->
                     </div> <!-- row.// -->

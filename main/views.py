@@ -1,5 +1,3 @@
-from itertools import product
-
 from cities_light.models import Country
 from django.db.models import Count
 from django.shortcuts import render, get_object_or_404, redirect
@@ -45,7 +43,9 @@ class ProductsView(View):
             query_view = request.GET.get('view')
 
             query_sub = request.GET.get('sub-category')
+
             sub_category = None
+
             if query_sub:
                 sub_category = get_object_or_404(SubCategory, slug=query_sub)
                 products = products.filter(sub_category=sub_category)
@@ -111,12 +111,17 @@ class ProductDetailsView(View):
 
             query_image = request.GET.get('image')
 
-            reviews = product.review_set.all
+            reviews = product.review_set.all()
+
+            in_favorite = False
+            if product.id in request.user.favorite_set.all().values_list('product', flat=True).distinct():
+                in_favorite = True
 
             context = {
                 'product': product,
                 'image': int(query_image) if query_image else None,
                 'reviews': reviews,
+                'in_favorite': in_favorite,
             }
             return render(request, 'product-details.html', context)
         return redirect('login')

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+
+<!-- ========================= SECTION CONTENT ========================= -->
+<section class="section-content padding-y">
+    <div class="container">
+
+        <div class="row">
+            <aside class="col-md-3">
+                <nav class="list-group">
+                    <a class="list-group-item" href="page-profile-main.html"> Account overview </a>
+                    <a class="list-group-item" href="page-profile-address.html"> My Address </a>
+                    <a class="list-group-item" href="page-profile-orders.html"> My Orders </a>
+                    <a class="list-group-item active" href="favorite_list.html"> My wishlist </a>
+                    <a class="list-group-item" href="page-profile-seller.html"> My Selling Items </a>
+                    <a class="list-group-item" href="page-profile-setting.html"> Settings </a>
+                    <a class="list-group-item" href="page-index-1.html"> Log out </a>
+                </nav>
+            </aside> <!-- col.// -->
+            <main class="col-md-9">
+
+                <article class="card">
+                    <div class="card-body">
+
+                        <div class="row">
+                            {% for favorite in favorites %}
+                                <div class="col-md-6">
+                                <figure class="itemside mb-4">
+                                    <div class="aside"><img src="{{ favorite.product.get_main_media.image.url }}"
+                                                            class="border img-md"></div>
+                                    <figcaption class="info">
+                                        <a href="{% url 'product-details' favorite.product.slug %}" class="title">{{ favorite.product.name }}</a>
+                                        <p class="price mb-2">{{ favorite.product.final_price|intcomma }} UZS</p>
+                                        <a href="#" class="btn btn-secondary btn-sm"> Savatga qo'shish </a>
+                                        <a href="{% url 'set-favorite' favorite.product.slug %}" class="btn btn-danger btn-sm" data-toggle="tooltip" title=""
+                                           data-original-title="Remove from wishlist"> <i class="fa fa-times"></i> </a>
+                                    </figcaption>
+                                </figure>
+                            </div> <!-- col.// -->
+                            {% endfor %}
+                        </div> <!-- row .//  -->
+
+                    </div> <!-- card-body.// -->
+                </article>
+
+
+            </main> <!-- col.// -->
+        </div>
+
+    </div> <!-- container .//  -->
+</section>
+<!-- ========================= SECTION CONTENT END// ========================= -->
+
+{% endblock %}
