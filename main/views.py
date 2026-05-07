@@ -116,7 +116,7 @@ class ProductDetailsView(View):
             in_favorite = False
             if product.id in request.user.favorite_set.all().values_list('product', flat=True).distinct():
                 in_favorite = True
-
+    
             context = {
                 'product': product,
                 'image': int(query_image) if query_image else None,

@@ -26,6 +26,10 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.product.name} - {self.variant.name} - {self.amount} cart item"
 
+    @property
+    def total_price(self):
+        return self.product.final_price * self.amount
+
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

@@ -10,50 +10,43 @@ from django.utils.text import slugify
 
 User = settings.AUTH_USER_MODEL
 
+class SlugMixin(models.Model):
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
 
-class Category(models.Model):
+    class Meta:
+        abstract = True
+
+    def generate_unique_slug(self, base_value):
+        base_slug = slugify(base_value)
+        slug = base_slug
+        counter = 1
+        while self.__class__.objects.filter(slug=slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        return slug
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self.generate_unique_slug(self.name)
+
+        super().save(*args, **kwargs)
+
+class Category(SlugMixin):
     name = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=100, unique=True, blank=True)
     image = models.ImageField(upload_to='categories/', null=True, blank=True)
 
     def __str__(self):
         return self.name
 
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            base_slug = slugify(self.name)
-            slug = base_slug
-
-            counter = 1
-            while Category.objects.filter(slug=slug).exists():
-                slug = f"{base_slug}-{counter}"
-                counter += 1
-            self.slug = slug
-
-        super().save(*args, **kwargs)
 
 
-class SubCategory(models.Model):
+class SubCategory(SlugMixin):
     name = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=100, unique=True, blank=True)
     image = models.ImageField(upload_to='sub-categories/', null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.name
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            base_slug = slugify(self.name)
-            slug = base_slug
-
-            counter = 1
-            while SubCategory.objects.filter(slug=slug).exists():
-                slug = f"{base_slug}-{counter}"
-                counter += 1
-            self.slug = slug
-
-        super().save(*args, **kwargs)
 
 
 class Seller(models.Model):
@@ -62,12 +55,11 @@ class Seller(models.Model):
     image = models.ImageField(upload_to="sellers/", null=True, blank=True)
 
     def __str__(self):
-        return self.first_name
+        return f"{self.first_name} {self.last_name}"
 
 
-class Product(models.Model):
+class Product(SlugMixin):
     name = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=260, unique=True, blank=True)
     brand = models.CharField(max_length=100, blank=True, null=True)
     details = models.TextField(blank=True, null=True)
     price = models.FloatField()
@@ -76,40 +68,28 @@ class Product(models.Model):
     delivery = models.CharField(max_length=100, blank=True, null=True)
     verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    views = models.PositiveIntegerField()
+    views = models.PositiveIntegerField(default=0)
     rating = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(5)], default=0)
     guarantee = models.CharField(max_length=50, blank=True, null=True)
 
     sub_category = models.ForeignKey(SubCategory, on_delete=models.SET_NULL, null=True)
-    seller = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    seller = models.ForeignKey(Seller, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return self.name
 
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            base_slug = slugify(self.name)
-            slug = base_slug
-
-            counter = 1
-            while Product.objects.filter(slug=slug).exists():
-                slug = f"{base_slug}-{counter}"
-                counter += 1
-            self.slug = slug
-
-        super().save(*args, **kwargs)
 
     @property
     def get_main_media(self):
         medias = self.media_set.all()
         if medias.exists():
-            media = medias.order_by('-main').first()
+            media = medias.filter(main=True).first()
             return media
         return None
 
     @property
     def rating_percentage(self):
-        return self.rating / 5 * 100
+        return round(self.rating / 5 * 100, 2)
 
     @property
     def get_discount(self):
@@ -121,10 +101,7 @@ class Product(models.Model):
     @property
     def final_price(self):
         discount = self.get_discount
-        if discount:
-            return discount.new_price
-        return self.price
-
+        return discount.new_price if discount else self.price
 
 class Media(models.Model):
     image = models.ImageField(upload_to='media-products/')
@@ -160,7 +137,7 @@ class Variant(models.Model):
 
     @property
     def get_next_price(self):
-        return self.choice.product.price + self.delta_price
+        return self.choice.product.final_price + self.delta_price
 
     def __str__(self):
         return self.name
@@ -185,12 +162,12 @@ class Discount(models.Model):
             self.dis_price = price - self.new_price
         elif self.dis_price:
             self.new_price = price - self.dis_price
-            self.percentage = 100 - self.new_price * 100 / price
+            self.percentage = 100 - (self.new_price * 100 / price)
         elif self.new_price:
-            self.percentage = 100 - self.new_price * 100 / price
+            self.percentage = 100 - (self.new_price * 100 / price)
             self.dis_price = price - self.new_price
         else:
-            self.finished_at = datetime.date.today()
+            self.end_date = datetime.date.today()
         super().save(*args, **kwargs)
 
 
@@ -209,14 +186,10 @@ class Review(models.Model):
         return f"{self.user.username} - {self.text}"
 
     def save(self, *args, **kwargs):
-
-        product = self.product
-        rates = product.review_set.all().values_list('rate', flat=True)
-
-        product.rating = (sum(rates) + int(self.rate)) / (len(rates) + 1)
-        product.save()
-
         super().save(*args, **kwargs)
+        avg_rate = self.product.review_set.aggregate(models.Avg('rate'))['rate__avg'] or 0
+        self.product.rating = round(avg_rate, 2)
+        self.product.save(update_fields=['rating'])
 
 
 class AdBanner(models.Model):
