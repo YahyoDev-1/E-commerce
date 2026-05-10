@@ -69,7 +69,7 @@
                             <td class="text-right">
                                 <a data-original-title="Save to Wishlist" title="" href="{% url 'set-favorite' cart_item.product.slug %}"
                                    class="btn btn-light" data-toggle="tooltip"> <i class="fa fa-heart" {% if in_favorite %} style="color: red" {% endif %}></i></a>
-                                <a href="/ochirish/{{savat.id}}/" class="btn btn-light btn-round"> Remove</a>
+                                <a href="{% url 'cart-decrement' cart_item.id %}?delete=1" class="btn btn-light btn-round"> Remove</a>
                             </td>
                         </tr>
                         {% endfor %}

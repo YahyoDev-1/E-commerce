@@ -13,4 +13,6 @@ urlpatterns = [
     path('cart-increment/<int:pk>/', cart_inc, name='cart-increment'),
 
     path('cart-decrement/<int:pk>/', cart_dec, name='cart-decrement'),
+
+    path('order/', OrderView.as_view(), name='order'),
 ]

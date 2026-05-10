@@ -5,7 +5,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 
 from main.models import Product
-from .models import Favorite, CartItem
+from .models import Favorite, CartItem, Order
 
 
 # Create your views here.
@@ -75,10 +75,20 @@ def cart_inc(request, pk):
 def cart_dec(request, pk):
     if request.user.is_authenticated and request.user.confirmed:
         cart_item = get_object_or_404(CartItem, user=request.user, id=pk)
-        if cart_item.amount > 1:
+        if cart_item.amount == 1 or request.GET.get('delete') == '1':
+            CartItem.objects.filter(user=request.user, id=pk).delete()
+        else:
             cart_item.amount -= 1
             cart_item.save()
-        else:
-            cart_item.delete()
         return redirect('my-cart')
     return redirect('login')
+
+class OrderView(View):
+    def get(self, request):
+        if request.user.is_authenticated and request.user.confirmed:
+            orders = Order.objects.filter(user=request.user)
+            context = {
+                'orders': orders,
+            }
+            return render(request, 'order-payment.html', context)
+        return redirect('login')
